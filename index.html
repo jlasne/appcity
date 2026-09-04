@@ -166,8 +166,6 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #modal .safe{background:rgba(77,232,208,.08);border-left:3px solid var(--cyan);padding:9px 12px;
   font-size:11.5px;line-height:1.55;margin:4px 0 6px;color:var(--ink)}
 #modal .field{margin-bottom:11px}
-#modal .two{display:grid;grid-template-columns:1fr 1fr;column-gap:10px}
-#modal .two input{min-width:0}
 #modal label{display:block;font-size:9px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;
   color:var(--dim);margin-bottom:5px}
 #modal label em{font-style:normal;font-weight:400;opacity:.7;text-transform:none;letter-spacing:.03em;margin-left:5px}
@@ -262,12 +260,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
       <div class="field"><div class="lr"><label for="fX">Founder handles on X <em>optional</em></label>
           <label class="chk"><input type="checkbox" id="fAnonF"> 🎭 Hide them, needs an app named or linked</label></div>
         <input type="text" id="fX" placeholder="jeremylasne, cofounder" autocomplete="off" spellcheck="false"></div>
-      <div class="two">
-      <div class="field"><label for="fIOS">App Store link <em>optional</em></label>
-        <input type="text" id="fIOS" placeholder="https://apps.apple.com/app/..." autocomplete="off" spellcheck="false"></div>
-      <div class="field"><label for="fPlay">Play Store link <em>optional</em></label>
-        <input type="text" id="fPlay" placeholder="https://play.google.com/store/apps/..." autocomplete="off" spellcheck="false"></div>
-      </div>
+      <div class="field"><label for="fLink">Link to the app <em>optional</em></label>
+        <input type="text" id="fLink" placeholder="App Store, Play Store or website" autocomplete="off" spellcheck="false"></div>
       <div class="field"><label for="fProj">RevenueCat project ID <em class="req">required</em><em>in the dashboard URL: app.revenuecat.com/projects/<b>proj…</b>/</em></label>
         <input type="text" id="fProj" placeholder="proj1ab2c3d4" autocomplete="off" spellcheck="false"></div>
       <div class="field"><label for="fKey">RevenueCat V2 key, charts metrics read only <em class="req">required</em></label>
@@ -1188,8 +1182,10 @@ function openCard(t) {
   const chips = [];
   if (t.k.anonFounder) chips.push('<span class="anon">🎭 Anonymous founder</span>');
   else for (const f of t.k.founders) chips.push('<a href="https://x.com/' + f + '" target="_blank" rel="noopener">@' + f + '</a>');
-  if (!t.k.anonApp && t.k.ios) chips.push('<a href="' + t.k.ios + '" target="_blank" rel="noopener"> App Store</a>');
-  if (!t.k.anonApp && t.k.play) chips.push('<a href="' + t.k.play + '" target="_blank" rel="noopener">▶ Play</a>');
+  for (const u of [t.k.ios, t.k.play]) if (!t.k.anonApp && u) {
+    const lab = /apple\.com/.test(u) ? ' App Store' : /play\.google/.test(u) ? '▶ Play' : '↗ ' + u.replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
+    chips.push('<a href="' + u + '" target="_blank" rel="noopener">' + lab + '</a>');
+  }
   document.getElementById('cChips').innerHTML = chips.join('');
   const litPct = Math.round(t.lit * 100);
   document.getElementById('cStats').innerHTML = [
@@ -1359,7 +1355,7 @@ document.getElementById('mGo').addEventListener('click', async () => {
   const anonA = document.getElementById('fAnonA').checked, anonF = document.getElementById('fAnonF').checked;
   const typed = document.getElementById('fKing').value.trim();
   const handle = document.getElementById('fX').value.trim().replace(/^@/, '');
-  const store = document.getElementById('fIOS').value.trim() || document.getElementById('fPlay').value.trim();
+  const store = document.getElementById('fLink').value.trim();
   const key = document.getElementById('fKey').value.trim();
   const proj = document.getElementById('fProj').value.trim();
   const note = document.getElementById('mNote'), go = document.getElementById('mGo');
@@ -1381,8 +1377,8 @@ document.getElementById('mGo').addEventListener('click', async () => {
   const rec = {
     id: 'local-' + seed, local: true, name: typed || 'Anonymous', tag: 'Read from RevenueCat',
     founders: handle ? handle.split(',').map(h => h.trim().replace(/^@/, '')).filter(Boolean) : [],
-    ios: document.getElementById('fIOS').value.trim() || undefined,
-    play: document.getElementById('fPlay').value.trim() || undefined,
+    ios: store && !/play\.google/.test(store) ? store : undefined,
+    play: /play\.google/.test(store) ? store : undefined,
     anonFounder: anonF, anonApp: anonA, seed, joined: 0,
     users: nums.users, trials: nums.trials, subs: nums.subs, mrr: nums.mrr, rev28: nums.rev28,
     newCustomers: nums.newCustomers, curve: 'exact',
@@ -1406,7 +1402,7 @@ document.getElementById('mGo').addEventListener('click', async () => {
   if (saved) { REMOTE.push(saved); rec.id = saved.id; }
   else { LOCAL.push(rec); saveLocal(); }
   closeModal();
-  ['fKing', 'fX', 'fIOS', 'fPlay', 'fKey', 'fProj'].forEach(id => { document.getElementById(id).value = ''; });
+  ['fKing', 'fX', 'fLink', 'fKey', 'fProj'].forEach(id => { document.getElementById(id).value = ''; });
   document.getElementById('fAnonA').checked = false; document.getElementById('fAnonF').checked = false;
   pendingLogo = null; document.getElementById('fLogoPrev').getContext('2d').clearRect(0, 0, 16, 16); document.getElementById('fLogo').value = '';
   rebuild(rec.id);
