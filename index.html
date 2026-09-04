@@ -756,11 +756,6 @@ function bakeStreet() {
   px(g, 0, 13, W, 1, '#2a2f4d'); px(g, 0, 40, W, 1, '#2a2f4d');
   for (let x = 0; x < W; x += 16) { px(g, x, 26, 9, 1, '#6a5d33'); px(g, x, 28, 9, 1, '#6a5d33'); }
   for (let x = 140; x < W; x += 260 + ((rnd() * 200) | 0)) { px(g, x, 33, 5, 2, '#2a2f45'); px(g, x + 1, 33, 3, 1, '#3a405c'); }
-  // Zebra crossings by the doors.
-  for (const t of towers) {
-    const cx = PAD + t.x + Math.floor(t.w / 2) - 8;
-    for (let i = 0; i < 6; i++) px(g, cx + i * 3, 14, 2, 26, '#4a4f6a');
-  }
   // Far kerb and a railed promenade beyond it.
   px(g, 0, 43, W, 2, '#4a5070'); px(g, 0, 43, W, 1, '#5c6388');
   px(g, 0, 45, W, 17, '#20243a'); px(g, 0, 45, W, 1, '#2c3150');
