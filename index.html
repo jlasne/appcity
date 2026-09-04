@@ -145,6 +145,21 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #tip b{color:var(--amber)}
 #tip em{font-style:normal;color:var(--dim)}
 
+/* ── sponsor popup, opened from the banner plane ────────────────────── */
+#sponsor{position:fixed;inset:0;z-index:40;display:none;background:rgba(3,5,12,.82);align-items:center;justify-content:center;padding:20px}
+#sponsor.on{display:flex}
+#sponsor .sheet{width:min(380px,100%);padding:18px 18px 16px;text-align:center;position:relative}
+#sponsor .x{position:absolute;top:8px;right:10px;font-size:15px;color:var(--dim)}
+#sponsor canvas{width:64px;height:36px;image-rendering:pixelated;display:block;margin:0 auto 8px}
+#sponsor h2{font-size:15px;font-weight:700;letter-spacing:.04em;margin-bottom:6px}
+#sponsor p{font-size:12px;line-height:1.6;color:var(--dim);margin-bottom:12px}
+#sponsor .mail{display:block;font-family:var(--ui);font-size:14px;color:var(--amber);margin-bottom:14px;word-break:break-all}
+#sponsor .go{display:block;width:100%;background:var(--amber);color:#1a1200;border-radius:3px;padding:12px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;font-size:11px;text-decoration:none}
+#sponsor .go:active{transform:translateY(1px)}
+#sponsor .copy{margin-top:8px;font-size:10px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+#sponsor .copy:hover{color:var(--ink)}
+
 /* ── modal ───────────────────────────────────────────────────────────── */
 #modal{position:fixed;inset:0;z-index:40;display:none;background:rgba(3,5,12,.82);
   align-items:center;justify-content:center;padding:20px}
@@ -242,6 +257,17 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   </div>
 </div>
 
+<div id="sponsor">
+  <div class="sheet glass">
+    <button class="x" id="sClose">✕</button>
+    <canvas id="sPlane" width="32" height="18"></canvas>
+    <h2>Sponsor this spot</h2>
+    <p>The banner plane crosses the sky every 34 seconds, for everyone, at any zoom. One sponsor at a time.</p>
+    <span class="mail" id="sMail">hey@jeremylasne.com</span>
+    <a class="go" id="sGo" href="#">Email me</a>
+    <button class="copy" id="sCopy">Copy the address</button>
+  </div>
+</div>
 <div id="modal">
   <div class="glass sheet">
     <div class="hd"><div><h2>Add your app</h2><small>Verified by RevenueCat. Numbers refresh once a day.</small></div>
@@ -796,7 +822,20 @@ const STAR_A = [0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.82, 0.95].map(a => 'rgba(223
    so it never depends on scroll or zoom. */
 const AD_TEXT = 'SPONSORED SPOT';
 const AD_LINK = 'mailto:hey@jeremylasne.com?subject=' + encodeURIComponent('App City: sponsor the banner plane');
-const adPlane = { frac: -0.3, spd: 1 / 34, ph: 0 };
+const adPlane = { frac: 0.35, spd: 1 / 34, ph: 0 };
+function drawPlaneSprite(g, pxx, pyy, lit) {
+  const hi = '#eef0fb', body = '#c7cde8', lo = '#9aa3c7';
+  px(g, pxx - 8, pyy - 1, 14, 3, body); px(g, pxx - 8, pyy - 1, 14, 1, hi); px(g, pxx - 8, pyy + 1, 14, 1, lo);
+  px(g, pxx + 6, pyy, 2, 1, hi);                                              // nose taper
+  px(g, pxx + 3, pyy - 1, 2, 2, '#0b0e1c'); px(g, pxx + 3, pyy - 1, 1, 1, '#bcd8f5'); // cockpit + glass
+  px(g, pxx - 9, pyy - 3, 2, 4, lo);                                          // tail fin
+  px(g, pxx - 10, pyy + 1, 3, 1, lo);                                         // tail stabilizer
+  px(g, pxx - 3, pyy - 3, 8, 1, body);                                        // wing
+  px(g, pxx - 1, pyy - 2, 1, 1, lo); px(g, pxx + 2, pyy - 2, 1, 1, lo);        // struts
+  g.globalAlpha = 0.5; px(g, pxx + 8, pyy - 2, 1, 4, '#c7cde8'); g.globalAlpha = 1; // prop blur
+  px(g, pxx + 8, pyy, 1, 1, '#fff3c4');                                       // nose light
+  if (lit) { px(g, pxx - 3, pyy - 3, 1, 1, '#ff4d4d'); px(g, pxx + 4, pyy - 3, 1, 1, '#5bff8a'); } // wingtip nav lights
+}
 /* Same box the draw call paints, in back-canvas local units, so the click
    and hover tests never drift out of sync with what is on screen. */
 function adPlaneBox(bw) {
@@ -919,8 +958,14 @@ function stepMotion(dt) {
     if (c.wait < 0) { c.wait = 2 + Math.random() * 6; c.x += (Math.random() - 0.5) * 6; }
   }
   for (const c of clouds) { c.x -= c.spd * dt; if (c.x < -200) c.x = worldW * 0.25 + 2000; }
-  adPlane.frac += adPlane.spd * dt; if (adPlane.frac > 1.3) adPlane.frac = -0.3;
-  adPlane.ph += dt;
+  {
+    // The moment the whole unit has left the right edge, put it just past the
+    // left edge, so the nose is entering as the tail vanished: no empty sky.
+    const vb = viewSize().bw;
+    adPlane.frac += adPlane.spd * dt;
+    if (adPlaneBox(vb).x0 >= vb) adPlane.frac = -15 / vb;
+    adPlane.ph += dt;
+  }
   for (const t of towers) flicker(t, Math.max(1, Math.round(t.win.length * 0.0025)));
 }
 
@@ -1033,16 +1078,10 @@ function draw(dt) {
     g.strokeStyle = '#ffb84d'; g.lineWidth = 1;
     g.strokeRect(pxx - 9.5 - bwid, by0 + 0.5, bwid - 1, bhgt - 1);
     pxText(g, label, pxx - 10 - bwid + 7, pyy - 4, '#ffb84d', 2);
-    // A proper twin-prop body: fuselage, tail fin, wings, prop discs, nav lights.
-    px(g, pxx - 12, pyy, 14, 2, '#dfe3f5'); px(g, pxx - 12, pyy - 1, 14, 1, '#f4f6ff');
-    px(g, pxx - 12, pyy + 2, 3, 4, '#c7cde8');                                   // tail fin
-    px(g, pxx - 6, pyy - 4, 2, 9, '#c7cde8'); px(g, pxx + 3, pyy - 4, 2, 9, '#c7cde8'); // wings
-    px(g, pxx - 5, pyy - 5, 1, 1, '#8b91b8'); px(g, pxx + 4, pyy - 5, 1, 1, '#8b91b8'); // prop blur
-    px(g, pxx - 5, pyy + 4, 1, 1, '#8b91b8'); px(g, pxx + 4, pyy + 4, 1, 1, '#8b91b8');
-    px(g, pxx + 1, pyy, 2, 2, '#0b0e1c');                                        // cockpit
-    px(g, pxx + 2, pyy + 2, 1, 1, '#e8ebf7');                                    // nose light
-    if (Math.sin(adPlane.ph * 6) > 0.3) px(g, pxx - 13, pyy, 1, 1, '#ff4d4d');
-    if (Math.sin(adPlane.ph * 6 + 3) > 0.3) px(g, pxx - 13, pyy + 1, 1, 1, '#5bff8a');
+    // A high-wing tow plane, nose to the right: tapered fuselage, a strut-braced
+    // wing overhead, a fin and stabilizer at the tail, a spinning prop, and the
+    // red/green nav lights a real wingtip carries.
+    drawPlaneSprite(g, pxx, pyy, Math.sin(adPlane.ph * 6) > 0.3 ? 1 : 0);
   }
   // Two searchlights sweep from the tallest roof. Drawn behind the depth
   // layers so the beams read as sky, not as paint on the buildings.
@@ -1184,7 +1223,7 @@ cvs.addEventListener('touchmove', (e) => {
 }, { passive: true });
 cvs.addEventListener('touchend', () => { pinch = null; }, { passive: true });
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { closeCard(); closeModal(); }
+  if (e.key === 'Escape') { closeCard(); closeModal(); closeSponsor(); }
   if (e.key === '+' || e.key === '=') setZoom(1); if (e.key === '-') setZoom(-1);
   const pan = 120 / zoom();
   if (e.key === 'ArrowLeft') cam.x -= pan; if (e.key === 'ArrowRight') cam.x += pan;
@@ -1224,7 +1263,7 @@ function hoverAt(sx, sy) {
   tip.classList.add('on');
 }
 function clickAt(sx, sy) {
-  if (planeHitAt(sx, sy)) { window.open(AD_LINK, '_self'); return; }
+  if (planeHitAt(sx, sy)) { openSponsor(); return; }
   const t = towerAt(sx, sy); if (t) openCard(t); else closeCard();
 }
 
@@ -1359,6 +1398,21 @@ function buildLegend() {
 /* Join form. Same rules as the map: the handle is required, anonymity
    needs an app named or linked, the logo is optional. */
 const modal = document.getElementById('modal');
+const sponsor = document.getElementById('sponsor');
+function openSponsor() {
+  closeCard();
+  const g = document.getElementById('sPlane').getContext('2d');
+  g.clearRect(0, 0, 32, 18); drawPlaneSprite(g, 14, 9, 1);
+  document.getElementById('sGo').href = AD_LINK;
+  sponsor.classList.add('on');
+}
+function closeSponsor() { sponsor.classList.remove('on'); }
+document.getElementById('sClose').addEventListener('click', closeSponsor);
+sponsor.addEventListener('click', e => { if (e.target === sponsor) closeSponsor(); });
+document.getElementById('sCopy').addEventListener('click', async (e) => {
+  try { await navigator.clipboard.writeText(document.getElementById('sMail').textContent); e.target.textContent = 'Copied'; }
+  catch (err) { e.target.textContent = 'Select it above'; }
+});
 function openModal() { modal.classList.add('on'); }
 function closeModal() { modal.classList.remove('on'); }
 document.getElementById('addBtn').addEventListener('click', openModal);
