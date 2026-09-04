@@ -555,6 +555,12 @@ function makeTower(k, idx) {
 function layoutTowers(ts) {
   ts.sort((a, b) => b.k.mrr - a.k.mrr);
   ts.forEach((t, i) => { t.rank = i + 1; });
+  // Downtown is still the middle, but a real skyline is not a pyramid: each
+  // tower's slot is nudged up to two places by its own seed, so a smaller
+  // tower can stand next to a bigger one. Rank one always keeps the centre.
+  const order = ts.slice(1).map((t, i) => ({ t, key: i + (hash1(t.k.seed, 41) - 0.5) * 4.4 }))
+    .sort((a, b) => a.key - b.key).map(o => o.t);
+  ts.splice(0, ts.length, ts[0], ...order);
   const gap = t => 10 + Math.round(t.rnd() * 14);
   // An empty lot is still a street to walk down.
   let left = 0, right = ts.length ? ts[0].w : 0;
