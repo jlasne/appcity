@@ -24,10 +24,10 @@ city and know who is doing well.
 Downtown is the middle: rank one stands in the centre, the rest fan out on
 both sides. Scroll sideways to walk the street. Click a tower for its card.
 
-## Add your tower
+## Add your app
 
 1. In RevenueCat, make a V2 API key with only **Charts metrics** set to Read.
-2. Press **Add your tower**, paste the key and your project ID.
+2. Press **Add your app**, paste the key and your project ID.
 3. Your browser reads six numbers, the tower breaks ground on the spot.
 
 The numbers refresh every day at 04:00 UTC. Thirty days of history build up,

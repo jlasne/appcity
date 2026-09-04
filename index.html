@@ -66,9 +66,13 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 #band .tot .n{font-size:14px;font-weight:700;line-height:1}
 #band .tot .n.up{color:#5be09a}#band .tot .n.down{color:#ff6b6b}
 #band .tot .l{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:3px}
-#addBtn{padding:0 16px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--amber);flex:0 0 auto;border-left:1px solid var(--line)}
-#addBtn:hover{background:rgba(255,184,77,.08)}
+#addBtn{padding:0 12px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--amber);flex:0 0 auto;border-left:1px solid var(--line);display:flex;align-items:center}
+#addBtn .neon{padding:6px 12px;border:1px solid var(--amber);border-radius:3px;white-space:nowrap;
+  box-shadow:0 0 6px rgba(255,184,77,.55),0 0 14px rgba(255,184,77,.3),inset 0 0 6px rgba(255,184,77,.25);
+  text-shadow:0 0 6px rgba(255,184,77,.8);animation:neon 2.6s ease-in-out infinite}
+#addBtn:hover .neon{background:rgba(255,184,77,.12);box-shadow:0 0 10px rgba(255,184,77,.8),0 0 22px rgba(255,184,77,.45),inset 0 0 8px rgba(255,184,77,.35)}
+@keyframes neon{0%,100%{opacity:1}50%{opacity:.82}}
 
 /* ── the legend, inside the join form ────────────────────────────────── */
 #legend{font-size:11px;border:1px solid var(--line);border-radius:3px;margin-bottom:16px;background:rgba(140,170,255,.04)}
@@ -196,7 +200,8 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   #band .mark small{display:none}
   #band .mark b{font-size:10px}
   #band .tot{padding:0 11px}
-  #addBtn{padding:0 11px;font-size:10px}
+  #addBtn{padding:0 8px;font-size:10px}
+  #addBtn .neon{padding:5px 9px}
   #card{bottom:42px;width:calc(100vw - 28px)}
   #credit{display:none}
   #brand .mark small{display:none}
@@ -216,7 +221,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <div class="mark"><canvas id="markCv" width="11" height="11"></canvas>
     <div><b>Founder City</b><small>one tower per app, at night</small></div></div>
   <div class="totals" id="totals"></div>
-  <button id="addBtn">+ Add<span class="long"> your tower</span></button>
+  <button id="addBtn"><span class="neon">+ Add<span class="long"> your app</span></span></button>
 </div>
 
 <div class="hud" id="ticker"><div class="lbl">LATEST</div><div class="track"><div class="run" id="run"></div></div></div>
@@ -239,7 +244,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 <div id="modal">
   <div class="glass sheet">
-    <div class="hd"><div><h2>Add your tower</h2><small>Verified by RevenueCat. Numbers refresh once a day.</small></div>
+    <div class="hd"><div><h2>Add your app</h2><small>Verified by RevenueCat. Numbers refresh once a day.</small></div>
       <button class="x" id="mClose" style="font-size:15px;color:var(--dim)">✕</button></div>
     <div class="bd">
       <div class="legend" id="legend">
