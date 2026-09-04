@@ -43,7 +43,7 @@
 html,body{height:100%;overflow:hidden;background:#070914}
 body{font-family:var(--ui);color:var(--ink);-webkit-font-smoothing:antialiased;
   -webkit-tap-highlight-color:transparent;overscroll-behavior:none}
-canvas#city{display:block;width:100vw;height:100vh;image-rendering:pixelated;image-rendering:crisp-edges;
+canvas#city{display:block;width:100vw;height:100vh;height:100dvh;image-rendering:pixelated;image-rendering:crisp-edges;
   cursor:grab;touch-action:none}
 canvas#city.dragging{cursor:grabbing}
 
@@ -201,7 +201,10 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   #credit{display:none}
   #brand .mark small{display:none}
   #modal{padding:0}
-  #modal .sheet{max-height:100vh;border-radius:0}
+  #modal .sheet{max-height:100vh;max-height:100dvh;border-radius:0}
+  #modal input[type=text],#modal input[type=password]{font-size:16px}
+  #addBtn .long{display:none}
+  #card{max-height:58dvh;overflow-y:auto;overscroll-behavior:contain}
 }
 </style>
 </head>
@@ -213,7 +216,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   <div class="mark"><canvas id="markCv" width="11" height="11"></canvas>
     <div><b>Founder City</b><small>one tower per app, at night</small></div></div>
   <div class="totals" id="totals"></div>
-  <button id="addBtn">+ Add your tower</button>
+  <button id="addBtn">+ Add<span class="long"> your tower</span></button>
 </div>
 
 <div class="hud" id="ticker"><div class="lbl">LATEST</div><div class="track"><div class="run" id="run"></div></div></div>
@@ -1102,19 +1105,27 @@ function draw(dt) {
    8. INPUT
    ═══════════════════════════════════════════════════════════════════════════ */
 
-let drag = null, moved = 0, pinch = null;
+let drag = null, moved = 0, pinch = null, glide = 0, lastMoveT = 0;
 cvs.addEventListener('pointerdown', (e) => {
   cvs.setPointerCapture(e.pointerId);
-  drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; moved = 0; cvs.classList.add('dragging');
+  drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y }; moved = 0; glide = 0; cvs.classList.add('dragging');
 });
 cvs.addEventListener('pointermove', (e) => {
   if (drag) {
     const z = zoom();
+    const was = cam.x, now = performance.now();
     cam.x = drag.cx - (e.clientX - drag.x) / z;
     moved += Math.abs(e.movementX || 0) + Math.abs(e.movementY || 0); clampCam();
+    // Speed of the last move, so a flick keeps going after the finger lifts.
+    const dtm = Math.max(8, now - lastMoveT); lastMoveT = now;
+    glide = (cam.x - was) / dtm * 1000;
   } else hoverAt(e.clientX, e.clientY);
 });
-function endDrag(e) { if (drag && moved < 5) clickAt(e.clientX, e.clientY); drag = null; cvs.classList.remove('dragging'); }
+function endDrag(e) {
+  if (drag && moved < 5) clickAt(e.clientX, e.clientY);
+  if (performance.now() - lastMoveT > 80) glide = 0;
+  drag = null; cvs.classList.remove('dragging');
+}
 cvs.addEventListener('pointerup', endDrag);
 cvs.addEventListener('pointercancel', () => { drag = null; cvs.classList.remove('dragging'); });
 cvs.addEventListener('pointerleave', () => { hovered = null; tip.classList.remove('on'); });
@@ -1481,6 +1492,7 @@ function start() {
       buildWorld(); cam.x = frac * worldW; clampCam();
       if (selected) selected = towers.find(t => t.k.id === selected.k.id) || null;
     }
+    if (glide && !drag) { cam.x += glide * dt; glide *= Math.pow(0.02, dt); if (Math.abs(glide) < 4) glide = 0; clampCam(); }
     if (!modal.classList.contains('on')) { stepMotion(dt); draw(dt); }
     requestAnimationFrame(frame);
   }
