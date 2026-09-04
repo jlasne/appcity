@@ -820,38 +820,78 @@ function seedMotion() {
 function newCar(rnd, anywhere) {
   const near = rnd() < 0.5;
   const r = rnd();
-  const kind = r < 0.1 ? 'bus' : r < 0.22 ? 'taxi' : r < 0.34 ? 'van' : 'car';
+  const kind = r < 0.08 ? 'bus' : r < 0.16 ? 'truck' : r < 0.28 ? 'taxi' : r < 0.38 ? 'van' : r < 0.46 ? 'bike' : 'car';
   const dir = near ? 1 : -1;
-  const x = anywhere ? -PAD + rnd() * (worldW + PAD * 2) : (dir > 0 ? -PAD - 20 : worldW + PAD + 20);
-  const w = { bus: 20, taxi: 12, van: 14, car: 11 + ((rnd() * 2) | 0) }[kind];
-  const color = kind === 'bus' ? '#4a5d8c' : kind === 'taxi' ? '#e3b23c' : kind === 'van' ? '#5b6270' : CAR_COLORS[(rnd() * CAR_COLORS.length) | 0];
-  return { x, near, dir, kind, w, color, spd: (kind === 'bus' ? 30 : 42) + rnd() * 34 };
+  const x = anywhere ? -PAD + rnd() * (worldW + PAD * 2) : (dir > 0 ? -PAD - 30 : worldW + PAD + 30);
+  const w = { bus: 26, truck: 28, taxi: 14, van: 16, bike: 7, car: 13 + ((rnd() * 3) | 0) }[kind];
+  const color = kind === 'bus' ? '#4a6aa6' : kind === 'taxi' ? '#e8b640' : kind === 'van' ? '#6a7180' : kind === 'truck' ? '#8a4a3a' : CAR_COLORS[(rnd() * CAR_COLORS.length) | 0];
+  const spd = { bus: 28, truck: 30, van: 38, bike: 56, taxi: 46, car: 42 }[kind] + rnd() * 24;
+  return { x, near, dir, kind, w, color, spd, ph: rnd() * 6.28 };
 }
+/* Lighter and darker takes on a body colour, for the roof line and the sills. */
+const SHADE = {};
+function shade(hex, k) {
+  const key = hex + k; if (SHADE[key]) return SHADE[key];
+  const n = parseInt(hex.slice(1), 16);
+  const f = v => clamp(Math.round(v + k), 0, 255);
+  return SHADE[key] = '#' + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+const GLASS = '#a9c8ee', GLASS_D = '#6f8fbb', TYRE = '#181c2c', HUB = '#7a819c';
+function wheel(g, x, y) { px(g, x, y - 1, 3, 2, TYRE); px(g, x + 1, y - 1, 1, 1, HUB); }
+function beam(g, x, y, fwd, len) {
+  const gr = g.createLinearGradient(x, y, x + (fwd ? len : -len), y);
+  gr.addColorStop(0, 'rgba(255,240,190,0.28)'); gr.addColorStop(1, 'rgba(255,240,190,0)');
+  g.fillStyle = gr; g.beginPath();
+  g.moveTo(x, y - 1); g.lineTo(x + (fwd ? len : -len), y - 3); g.lineTo(x + (fwd ? len : -len), y + 3); g.lineTo(x, y + 1); g.closePath(); g.fill();
+}
+/* One sprite per kind, drawn facing its direction. cy is the road under the tyres. */
 function drawCar(g, c, cx, cy) {
-  const w = c.w, fwd = c.dir > 0;
-  const h = c.kind === 'bus' ? 6 : c.kind === 'van' ? 5 : 4;
-  const y = cy - h;
-  // Body, cabin, windows, wheels.
-  px(g, cx, y + 1, w, h - 1, c.color);
-  if (c.kind === 'bus') { px(g, cx, y, w, 2, c.color); for (let i = 2; i < w - 2; i += 3) px(g, cx + i, y + 1, 2, 2, '#c9e6ff'); px(g, cx + (fwd ? w - 1 : 0), y + 1, 1, 2, '#c9e6ff'); }
-  else if (c.kind === 'van') { px(g, cx + (fwd ? 0 : 3), y, w - 3, 2, c.color); px(g, cx + (fwd ? w - 4 : 1), y + 1, 3, 2, '#c9e6ff'); }
-  else {
-    const cab = Math.max(4, w - 5);
-    px(g, cx + (fwd ? 1 : w - cab - 1), y, cab, 1, c.color);
-    px(g, cx + (fwd ? 2 : w - cab), y, cab - 2, 2, '#bcd8f5');
-    if (c.kind === 'taxi') { px(g, cx + (w >> 1) - 1, y - 1, 3, 1, '#fff1b0'); }
+  const w = c.w, fwd = c.dir > 0, col = c.color, hi = shade(col, 34), lo = shade(col, -30);
+  const nose = fwd ? cx + w - 1 : cx, tail = fwd ? cx : cx + w - 1;
+  g.globalAlpha = 0.35; px(g, cx + 1, cy + 1, w - 2, 1, '#000'); g.globalAlpha = 1;
+  if (c.kind === 'bus') {
+    px(g, cx, cy - 8, w, 7, col); px(g, cx, cy - 8, w, 1, hi); px(g, cx, cy - 2, w, 1, lo);
+    for (let i = 2; i < w - 3; i += 4) px(g, cx + i, cy - 7, 3, 3, GLASS);
+    px(g, fwd ? cx + w - 4 : cx + 1, cy - 7, 3, 4, GLASS);                       // windscreen
+    px(g, fwd ? cx + w - 6 : cx + 5, cy - 8, 3, 1, '#ffb347');                     // route sign
+    px(g, fwd ? cx + 8 : cx + w - 10, cy - 4, 1, 3, lo); px(g, fwd ? cx + 10 : cx + w - 12, cy - 4, 1, 3, lo); // door
+    wheel(g, cx + 3, cy); wheel(g, cx + w - 6, cy);
+  } else if (c.kind === 'truck') {
+    const cab = 7, box = w - cab - 1;
+    const bx = fwd ? cx : cx + cab + 1, kx = fwd ? cx + box + 1 : cx;
+    px(g, bx, cy - 9, box, 8, '#c9cdd8'); px(g, bx, cy - 9, box, 1, '#e6e9f0'); px(g, bx, cy - 2, box, 1, '#8c92a3');
+    px(g, bx + 1, cy - 7, box - 2, 1, '#aeb3c1'); px(g, bx + 1, cy - 5, box - 2, 1, '#aeb3c1');
+    px(g, kx, cy - 6, cab, 5, col); px(g, kx, cy - 6, cab, 1, hi); px(g, kx, cy - 2, cab, 1, lo);
+    px(g, fwd ? kx + 3 : kx + 1, cy - 6, 3, 3, GLASS);
+    px(g, fwd ? kx + cab - 1 : kx, cy - 3, 1, 1, '#fff3c4');
+    wheel(g, bx + 2, cy); wheel(g, bx + 6, cy); wheel(g, kx + (fwd ? 1 : cab - 4), cy);
+  } else if (c.kind === 'van') {
+    px(g, cx, cy - 7, w, 6, col); px(g, cx, cy - 7, w, 1, hi); px(g, cx, cy - 2, w, 1, lo);
+    px(g, fwd ? cx + w - 4 : cx + 1, cy - 6, 3, 3, GLASS);                       // windscreen
+    px(g, fwd ? cx + w - 8 : cx + 5, cy - 6, 3, 2, GLASS_D);                     // side window
+    px(g, fwd ? cx + w - 1 : cx, cy - 6, 1, 4, lo);
+    wheel(g, cx + 2, cy); wheel(g, cx + w - 5, cy);
+  } else if (c.kind === 'bike') {
+    px(g, cx + 1, cy - 2, w - 2, 1, '#2a2e40');
+    px(g, fwd ? cx + 2 : cx + 3, cy - 5, 2, 3, '#3b3f55'); px(g, fwd ? cx + 2 : cx + 3, cy - 6, 2, 1, '#e8c39e'); // rider
+    wheel(g, cx, cy); wheel(g, cx + w - 3, cy);
+  } else {
+    // A car: sills, a body, a cabin set back from the bonnet, glass on three sides.
+    const cab = Math.max(5, w - 7), cabX = fwd ? cx + 2 : cx + w - 2 - cab;
+    px(g, cx, cy - 4, w, 3, col); px(g, cx, cy - 2, w, 1, lo); px(g, cx, cy - 4, w, 1, hi);
+    px(g, nose, cy - 2, 1, 1, '#b9bfd0'); px(g, tail, cy - 2, 1, 1, '#b9bfd0');            // bumpers
+    px(g, cabX, cy - 6, cab, 2, col); px(g, cabX, cy - 6, cab, 1, hi);
+    px(g, cabX + 1, cy - 6, cab - 2, 2, GLASS); px(g, cabX + (cab >> 1), cy - 6, 1, 2, col);
+    px(g, fwd ? cabX + cab - 1 : cabX, cy - 5, 1, 1, GLASS_D);
+    if (c.kind === 'taxi') px(g, cabX + (cab >> 1) - 1, cy - 7, 3, 1, '#fff1b0');
+    wheel(g, cx + 2, cy); wheel(g, cx + w - 5, cy);
   }
-  px(g, cx, y + 1, w, 1, 'rgba(255,255,255,0.10)');
-  px(g, cx + 1, cy, 2, 1, '#0b0d18'); px(g, cx + w - 3, cy, 2, 1, '#0b0d18');
-  if (c.kind === 'bus') px(g, cx + (w >> 1) - 1, cy, 2, 1, '#0b0d18');
-  // Lights, beams, and the glint they leave on the wet road.
-  const head = fwd ? cx + w : cx - 1, tail = fwd ? cx - 1 : cx + w;
-  px(g, head, y + h - 2, 1, 1, '#fff3c4'); px(g, tail, y + h - 2, 1, 1, '#ff4d4d');
-  g.globalAlpha = 0.22; px(g, fwd ? head + 1 : head - 7, y + h - 3, 7, 3, '#fff3c4');
-  g.globalAlpha = 0.12; px(g, fwd ? head + 8 : head - 12, y + h - 3, 5, 3, '#fff3c4');
-  g.globalAlpha = 0.35; px(g, fwd ? tail - 6 : tail + 1, y + h - 2, 6, 1, '#ff4d4d');
-  g.globalAlpha = 0.18; px(g, cx + 1, cy + 2, w - 2, 1, c.kind === 'taxi' ? '#ffe9a0' : '#9fb7ff');
-  g.globalAlpha = 1;
+  // Lamps and the beam ahead.
+  const ly = c.kind === 'bus' ? cy - 4 : c.kind === 'truck' ? cy - 3 : c.kind === 'van' ? cy - 4 : c.kind === 'bike' ? cy - 3 : cy - 3;
+  px(g, nose, ly, 1, 1, '#fff3c4'); px(g, tail, ly, 1, 1, '#ff4d4d');
+  if (c.kind !== 'bike') px(g, tail, ly - 1, 1, 1, '#ff4d4d');
+  beam(g, fwd ? nose + 1 : nose, ly, fwd, c.kind === 'bike' ? 10 : 18);
+  g.globalAlpha = 0.5; px(g, fwd ? tail - 2 : tail + 1, ly, 2, 1, '#ff4d4d'); g.globalAlpha = 1;
 }
 
 const rr = mulberry(777);
@@ -1044,20 +1084,13 @@ function draw(dt) {
       g.strokeRect(tx - 2.5, y0 - 0.5, t.w + 5, BASE_Y - top - y0 + 1);
     }
   }
-  // Street, then the wet reflection of the lobbies in the road, then the lamps.
+  // Street, the far lane, then the near lane over it, then the lamps.
   g.drawImage(street, left + PAD, 0, bw, 62, 0, BASE_Y - top, bw, 62);
-  g.save();
-  g.globalAlpha = 0.16;
-  for (let i = 0; i < 17; i++) {
-    const dy = i * 2;
-    const dx = Math.round(Math.sin(T * 1.3 + i * 0.7) * 1.5);
-    g.drawImage(skyline, left - dx, BASE_Y - 6 - i * 6, bw, 6, 0, BASE_Y - top + 9 + dy, bw, 2);
-  }
-  g.restore();
-  for (const c of cars) {
+  for (const pass of [false, true]) for (const c of cars) {
+    if (c.near !== pass) continue;
     const cx = c.x - left;
-    if (cx < -40 || cx > bw + 40) continue;
-    drawCar(g, c, cx, BASE_Y - top + (c.near ? 38 : 24));
+    if (cx < -60 || cx > bw + 60) continue;
+    drawCar(g, c, cx, BASE_Y - top + (c.near ? 39 : 25));
   }
   g.drawImage(front, left + PAD, 0, bw, 40, 0, BASE_Y - top - 34, bw, 40);
   for (const w of walkers) { const wx = w.x - left; if (wx > -4 && wx < bw + 4) drawPerson(g, wx | 0, BASE_Y - top, w, true); }
