@@ -234,7 +234,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 <div class="hud" id="band">
   <div class="mark"><canvas id="markCv" width="11" height="11"></canvas>
-    <div><b>App City</b><small>one tower per app, at night</small></div></div>
+    <div><b>App City</b><small id="markSub">one tower per app, at night</small></div></div>
   <div class="totals" id="totals"></div>
   <button id="addBtn"><span class="neon">+ Add<span class="long"> your app</span></span></button>
 </div>
@@ -318,7 +318,42 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
    plus thirty days of history. Replace SEED with a fetch to go live.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const SEED = [];
+/* /demo shows a full street of invented apps, so a visitor sees what the
+   city looks like once thirty founders have moved in. Nothing here is real. */
+const DEMO = location.search.indexOf('demo') >= 0;
+const DEMO_APPS = [
+  // id, name, category, X handle, users, trials, subs, MRR, curve. Numbers are invented for the demo.
+  ['flo','Flo','Cycle tracking','flotracker',12000000,120000,900000,8500000,'grow'],
+  ['calai','Cal AI','Calorie scanner','zach_yadegari',2400000,60000,310000,2600000,'spike'],
+  ['blinkist','Blinkist','Book summaries','blinkist',3000000,35000,300000,2400000,'flat'],
+  ['runna','Runna','Running plans','runnacoach',900000,30000,180000,1900000,'grow'],
+  ['lifesum','Lifesum','Nutrition','lifesum',2500000,30000,210000,1600000,'flat'],
+  ['sleepcycle','Sleep Cycle','Sleep tracker','sleepcycle',3500000,40000,250000,1500000,'flat'],
+  ['rizz','Rizz','Dating replies','rizzapp',3100000,80000,160000,1400000,'spike'],
+  ['fitbod','Fitbod','Gym planner','fitbod',1200000,25000,140000,1300000,'grow'],
+  ['clue','Clue','Period tracker','clue',4000000,30000,200000,1200000,'flat'],
+  ['ladder','Ladder','Strength coach','joinladder',400000,15000,95000,1100000,'grow'],
+  ['umax','Umax','Looksmax','umaxapp',1800000,50000,120000,980000,'flat'],
+  ['impulse','Impulse','Brain training','impulseapp',2200000,40000,130000,860000,'flat'],
+  ['fastic','Fastic','Fasting','fastic',1500000,25000,110000,720000,'flat'],
+  ['finch','Finch','Self-care pet','finchcare',1100000,30000,120000,640000,'grow'],
+  ['elevate','Elevate','Brain games','elevateapp',1600000,20000,90000,620000,'flat'],
+  ['rise','Rise','Sleep energy','risescience',600000,14000,70000,520000,'flat'],
+  ['yuka','Yuka','Food scanner','yukaapp',6000000,20000,150000,500000,'grow'],
+  ['balance','Balance','Meditation','balanceapp',800000,20000,60000,450000,'grow'],
+  ['plugai','Plug AI','Dating assistant','plugai',700000,22000,45000,380000,'shrink'],
+  ['loona','Loona','Bedtime','loonaapp',500000,12000,40000,290000,'grow'],
+  ['bloom','Bloom','CBT journal','bloomapp',400000,10000,35000,260000,'grow'],
+  ['strong','Strong','Workout log','strongapp',900000,8000,60000,240000,'flat'],
+  ['waterllama','Waterllama','Hydration','waterllama',700000,9000,30000,110000,'grow'],
+  ['streaks','Streaks','Habits','streaksapp',300000,3000,9000,40000,'flat'],
+  ['kaught','Kaught','Fishing log','jeremylasne',18400,610,2240,15680,'grow'],
+  ['first','First tower','Kept private','jeremylasne',2100,34,68,540,'grow',0,1],
+];
+const SEED = DEMO ? DEMO_APPS.map(([id, name, tag, f, users, trials, subs, mrr, curve, anonF, anonA, link], i) => ({
+  id, name, tag, founders: f.split(','), users, trials, subs, mrr, curve,
+  anonFounder: !!anonF, anonApp: !!anonA, ios: link, seed: 1000 + i * 977, joined: 3 + (i * 7) % 60,
+})) : [];
 
 /* ═══════════════════════════════════════════════════════════════════════════
    2. NUMBERS
@@ -1564,6 +1599,7 @@ function boot() {
   resize();
   let started = false;
   const go = () => { if (started) return; started = true; loadLogos().then(start); };
+  if (DEMO) { document.getElementById('markSub').textContent = 'demo, invented numbers'; document.title = 'App City demo'; go(); return; }
   cx('city.towers', {}, 6000).then(list => {
     if (!Array.isArray(list)) return;
     REMOTE = list;
