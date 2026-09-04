@@ -791,7 +791,11 @@ function bakeFront() {
 
 const cars = [], walkers = [], crowds = [], stars = [], clouds = [];
 const STAR_A = [0.1, 0.22, 0.34, 0.46, 0.58, 0.7, 0.82, 0.95].map(a => 'rgba(223,230,255,' + a + ')');
-let plane = null, planeTimer = 20;
+/* The banner plane is a permanent ad slot, not a random event: it flies the
+   width of the screen on a fixed clock and wraps from right back to left,
+   so it never depends on scroll or zoom. */
+const AD_TEXT = 'SPONSORED SPOT';
+const adPlane = { frac: -0.3, spd: 1 / 34, ph: 0 };
 const CAR_COLORS = ['#3d4460', '#4c3a5c', '#2f4a58', '#5a3d3d', '#3a3f4f', '#4a4a30'];
 const SKIN = ['#e8c39e', '#c99a72', '#8d5a3c', '#f1d2b6'];
 const CLOTH = ['#5a6a9c', '#8a4c5c', '#4c7a6a', '#8a7a4c', '#6c5a8c', '#4a5a6c'];
@@ -907,8 +911,8 @@ function stepMotion(dt) {
     if (c.wait < 0) { c.wait = 2 + Math.random() * 6; c.x += (Math.random() - 0.5) * 6; }
   }
   for (const c of clouds) { c.x -= c.spd * dt; if (c.x < -200) c.x = worldW * 0.25 + 2000; }
-  if (plane) { plane.x += plane.spd * dt; plane.ph += dt; if (plane.x > worldW * 0.3 + 2400) plane = null; }
-  else { planeTimer -= dt; if (planeTimer < 0) { plane = { x: -40, y: BAND_H + 20 + Math.random() * 80, spd: 70 + Math.random() * 40, ph: 0 }; planeTimer = 35 + Math.random() * 40; } }
+  adPlane.frac += adPlane.spd * dt; if (adPlane.frac > 1.3) adPlane.frac = -0.3;
+  adPlane.ph += dt;
   for (const t of towers) flicker(t, Math.max(1, Math.round(t.win.length * 0.0025)));
 }
 
@@ -1006,11 +1010,23 @@ function draw(dt) {
       px(g, bx, by, bwid, bh2, '#101430'); px(g, bx + 2, by + bh2, bwid - 4, 1, '#2a2350'); px(g, bx + 3, by - 1, bwid - 6, 1, '#141a3a');
     }
   }
-  if (plane) {
-    const pxx = plane.x - left * 0.3, pyy = plane.y - top;
-    px(g, pxx, pyy, 6, 1, '#9aa3c7'); px(g, pxx + 2, pyy - 1, 1, 1, '#9aa3c7');
-    if (Math.sin(plane.ph * 6) > 0.3) px(g, pxx - 1, pyy, 1, 1, '#ff4d4d');
-    if (Math.sin(plane.ph * 6 + 3) > 0.3) px(g, pxx + 6, pyy, 1, 1, '#5bff8a');
+  {
+    // frac is a fraction of the visible screen width, so the plane always
+    // crosses edge to edge in the same time, whatever the zoom or scroll.
+    const pxx = adPlane.frac * bw, pyy = BAND_H + 30 + Math.sin(T * 0.6) * 3;
+    const label = AD_TEXT, tw = pxTextW(label, 1), bwid = tw + 8, bhgt = 9;
+    // Tow rope, then the bordered banner trailing behind the nose.
+    px(g, pxx - 6, pyy, 6, 1, '#5a6088');
+    px(g, pxx - 6 - bwid, pyy - Math.floor(bhgt / 2), bwid, bhgt, '#0b0e1c');
+    g.strokeStyle = '#ffb84d'; g.lineWidth = 1;
+    g.strokeRect(pxx - 5.5 - bwid, pyy - Math.floor(bhgt / 2) - 0.5, bwid + 1, bhgt + 1);
+    pxText(g, label, pxx - 6 - bwid + 4, pyy - 2, '#ffb84d', 1);
+    // Fuselage, wing, tail, prop blur, and blinking nav lights.
+    px(g, pxx, pyy, 7, 1, '#c7cde8'); px(g, pxx + 1, pyy - 1, 3, 1, '#c7cde8');
+    px(g, pxx + 2, pyy + 1, 1, 2, '#9aa3c7'); px(g, pxx + 5, pyy - 2, 1, 2, '#9aa3c7');
+    px(g, pxx + 7, pyy, 1, 1, '#e8ebf7');
+    if (Math.sin(adPlane.ph * 6) > 0.3) px(g, pxx - 1, pyy, 1, 1, '#ff4d4d');
+    if (Math.sin(adPlane.ph * 6 + 3) > 0.3) px(g, pxx + 6, pyy - 1, 1, 1, '#5bff8a');
   }
   // Two searchlights sweep from the tallest roof. Drawn behind the depth
   // layers so the beams read as sky, not as paint on the buildings.
