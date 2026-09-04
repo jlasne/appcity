@@ -476,16 +476,19 @@ function floorsFor(mrr) { return 3 + Math.round((maxFloors - 3) * Math.pow(clamp
 /* Windows in the building follow the audience; divide by the height MRR
    gave it and the width falls out. Capped so a free app with a million users
    is a mall, not a wall. */
-function baysFor(users, floors) {
-  const area = 2.5 * Math.pow(Math.max(0, users), 0.55);
-  return clamp(Math.round(area / Math.max(1, floors)), 3, 70);
+/* Width grows with the audience on a log scale, so a hundred users is a
+   townhouse and ten million is a wide tower, never a wall: 100 users is 5
+   windows across, 10k is 10, 1M is 17, 10M is 20. */
+function baysFor(users) {
+  const l = Math.log10(Math.max(10, users));
+  return clamp(Math.round(2 + 0.9 * Math.pow(l, 1.55)), 3, 24);
 }
 
 function makeTower(k, idx) {
   const hist = buildHistory(k);
   const churn = isFresh(k) ? 0 : churn30(hist, k.curve === 'exact');
   const floors = floorsFor(k.mrr);
-  const bays = baysFor(k.users, floors);
+  const bays = baysFor(k.users);
   // The paying share of the audience, stretched so a typical ten percent
   // conversion still reads as a building with people in it.
   const conv = k.subs / Math.max(1, k.users);
