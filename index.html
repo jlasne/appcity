@@ -3,22 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Founder City</title>
+<title>App City</title>
 <meta name="description" content="Your app as a tower in a pixel city at night. Height is MRR, size is active users, lit windows are subscribers.">
 <link rel="canonical" href="https://appcity.jeremylasne.com/">
 <meta name="theme-color" content="#070914">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Founder City">
+<meta property="og:site_name" content="App City">
 <meta property="og:url" content="https://appcity.jeremylasne.com/">
-<meta property="og:title" content="Founder City">
+<meta property="og:title" content="App City">
 <meta property="og:description" content="Your app as a tower in a pixel city at night. Height is MRR, size is active users, lit windows are subscribers.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:creator" content="@jeremylasne">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════
-   Founder City — /foundercity/
+   App City — appcity.jeremylasne.com
 
    One tower per app, side on, at night. Height is MRR, width is subscribers,
    lit windows are active users, the dark floors at the top are churn, a
@@ -219,7 +219,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 
 <div class="hud" id="band">
   <div class="mark"><canvas id="markCv" width="11" height="11"></canvas>
-    <div><b>Founder City</b><small>one tower per app, at night</small></div></div>
+    <div><b>App City</b><small>one tower per app, at night</small></div></div>
   <div class="totals" id="totals"></div>
   <button id="addBtn"><span class="neon">+ Add<span class="long"> your app</span></span></button>
 </div>
@@ -254,7 +254,7 @@ button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
       <h3>Make a read-only key</h3>
       <ol>
         <li>Open RevenueCat, then <code>Project settings → API keys</code>.</li>
-        <li>Click <code>+ New API key</code>, name it <code>Founder City</code>, version <code>V2</code>.</li>
+        <li>Click <code>+ New API key</code>, name it <code>App City</code>, version <code>V2</code>.</li>
         <li>Set every permission group to <code>No access</code>, then <code>Charts metrics permissions</code> to <code>Read</code>.</li>
         <li>Click <code>Generate</code> and copy the key once.</li>
       </ol>
@@ -376,7 +376,7 @@ function cx(op, args, ms) {
           e => { clearTimeout(timer); throw e; });
 }
 let REMOTE = [];
-const LOCAL_KEY = 'foundercity.local';
+const LOCAL_KEY = 'appcity.local';
 let LOCAL = [];
 try { LOCAL = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (e) { LOCAL = []; }
 function saveLocal() { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(LOCAL)); } catch (e) {} }
